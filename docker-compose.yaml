@@ -30,3 +30,30 @@ services:
         cd processor
         cargo build
       "
+
+  postgres:
+    image: postgres:alpine
+    container_name: bond-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: sawtooth
+      POSTGRES_PASSWORD: sawtooth
+      POSTGRES_DB: sawtooth-bond
+    ports:
+      - '5432:5432'
+
+  bond-subscriber:
+    build:
+      context: .
+      dockerfile: ./subscriber/Dockerfile
+    image: bond-subscriber
+    container_name: bond-subscriber
+    volumes:
+      - '.:/project/sawtooth-bond'
+    depends_on:
+      - postgres
+    command: |
+      bash -c "
+        cd subscriber
+        cargo build
+      "
