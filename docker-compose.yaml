@@ -55,5 +55,6 @@ services:
     command: |
       bash -c "
         cd subscriber
-        cargo build
+        cargo build && \
+        bond_subscriber --dbhost postgres -vv
       "

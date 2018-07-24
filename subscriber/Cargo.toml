@@ -19,3 +19,7 @@ authors = ["Bitwise IO"]
 
 [dependencies]
 bond-common = { path = "../common"}
+postgres = "0.15"
+log = "0.3"
+simple_logger = "0.4"
+clap = "2"
