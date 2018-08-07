@@ -19,7 +19,7 @@ use errors::DatabaseError;
 use r2d2::{Pool, PooledConnection};
 use r2d2_diesel::ConnectionManager;
 
-pub type Connection = PooledConnection<ConnectionManager<PgConnection>>;
+pub type DieselConnection = PooledConnection<ConnectionManager<PgConnection>>;
 
 pub struct ConnectionPool {
     pool: Pool<ConnectionManager<PgConnection>>,
@@ -36,7 +36,7 @@ impl ConnectionPool {
         Ok(cp)
     }
 
-    pub fn get_connection(&self) -> Result<Connection, DatabaseError> {
+    pub fn get_connection(&self) -> Result<DieselConnection, DatabaseError> {
         self.pool.get().map_err(DatabaseError::ConnError)
     }
 }
