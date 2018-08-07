@@ -17,6 +17,7 @@
 
 pub mod connection_pool;
 pub mod custom_types;
+pub mod data_manager;
 pub mod errors;
 pub mod models;
 pub mod tables_schema;
