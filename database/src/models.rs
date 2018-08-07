@@ -194,7 +194,7 @@ pub struct Participant {
     pub end_block_num: Option<i64>,
 }
 
-#[derive(Queryable, Insertable)]
+#[derive(Queryable, Insertable, Clone)]
 #[table_name = "participants"]
 pub struct NewParticipant {
     pub public_key: String,
