@@ -1,0 +1,33 @@
+
+version: '2.1'
+
+services:
+
+ test-postgres:
+  image: postgres:alpine
+  container_name: bond-postgres-test
+  restart: always
+  environment:
+    POSTGRES_USER: sawtooth
+    POSTGRES_PASSWORD: sawtooth
+    POSTGRES_DB: sawtooth-bond-test
+  volumes:
+    - '../../database/tables:/docker-entrypoint-initdb.d'
+  ports:
+    - '5430:5432'
+
+ test-bond-db:
+     build:
+       context: .
+       dockerfile: ../Dockerfile
+     image: bond-database-test
+     container_name: bond-database-test
+     volumes:
+       - '../../:/project/sawtooth-bond'
+     depends_on:
+       - test-postgres
+     command: |
+       bash -c "
+         cd database
+         cargo test -- --test-threads=1
+       "
