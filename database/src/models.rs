@@ -45,8 +45,8 @@ pub struct NewAuthorization {
     pub participant_public_key: String,
     pub organization_id: String,
     pub role: RoleEnum,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
     pub address: String,
 }
 
@@ -80,8 +80,8 @@ pub struct NewBond {
     pub face_value: i64,
     pub coupon_type: CouponTypeEnum,
     pub coupon_frequency: CouponFrequencyEnum,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
 }
 
 #[derive(Queryable)]
@@ -100,8 +100,8 @@ pub struct NewCorporateDebtRating {
     pub bond_id: String,
     pub agency: String,
     pub rating: String,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
 }
 
 #[derive(Queryable)]
@@ -123,8 +123,8 @@ pub struct NewHolding {
     pub asset_id: String,
     pub asset_type: AssetTypeEnum,
     pub amount: i64,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
     pub address: String,
 }
 
@@ -160,8 +160,8 @@ pub struct NewOrder {
     pub action: OrderActionEnum,
     pub order_type: OrderTypeEnum,
     pub timestamp: i64,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
 }
 
 #[derive(Queryable)]
@@ -182,8 +182,8 @@ pub struct NewOrganization {
     pub industry: Option<String>,
     pub name: Option<String>,
     pub organization_type: OrganizationTypeEnum,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
 }
 
 #[derive(Queryable)]
@@ -202,8 +202,8 @@ pub struct NewParticipant {
     pub public_key: String,
     pub organization_id: String,
     pub username: String,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
 }
 
 #[derive(Queryable)]
@@ -249,8 +249,8 @@ pub struct NewQuote {
     pub quote_id: String,
     pub status: QuoteStatusEnum,
     pub timestamp: i64,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
 }
 
 #[derive(Queryable)]
@@ -275,8 +275,8 @@ pub struct NewSettlement {
     pub action: OrderActionEnum,
     pub bond_quantity: i64,
     pub currency_amount: i64,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
 }
 #[derive(Queryable)]
 pub struct Receipt {
@@ -300,6 +300,6 @@ pub struct NewReceipt {
     pub coupon_date: i64,
     pub amount: i64,
     pub timestamp: i64,
-    pub start_block_num: Option<i64>,
-    pub end_block_num: Option<i64>,
+    pub start_block_num: i64,
+    pub end_block_num: i64,
 }
