@@ -36,7 +36,6 @@ pub struct Authorization {
     pub role: Option<RoleEnum>,
     pub start_block_num: Option<i64>,
     pub end_block_num: Option<i64>,
-    pub address: Option<String>,
 }
 
 #[derive(Queryable, Insertable, Debug, PartialEq)]
@@ -47,7 +46,6 @@ pub struct NewAuthorization {
     pub role: RoleEnum,
     pub start_block_num: i64,
     pub end_block_num: i64,
-    pub address: String,
 }
 
 #[derive(Queryable)]

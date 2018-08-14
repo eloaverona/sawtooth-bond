@@ -32,7 +32,6 @@ table! {
         role -> Nullable<Role>,
         start_block_num -> Nullable<Int8>,
         end_block_num -> Nullable<Int8>,
-        address -> Nullable<Varchar>,
     }
 }
 
