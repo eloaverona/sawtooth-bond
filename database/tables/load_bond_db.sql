@@ -51,8 +51,7 @@ CREATE TABLE IF NOT EXISTS organizations (
 CREATE TABLE IF NOT EXISTS authorizations (
   participant_public_key    varchar,
   organization_id           varchar,
-  role                      Role,
-  address                   varchar
+  role                      Role
 ) INHERITS (chain_record);
 
 CREATE TABLE IF NOT EXISTS receipts (
