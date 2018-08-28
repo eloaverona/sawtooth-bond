@@ -26,10 +26,10 @@ pub struct DataManager {
     conn: DieselConnection,
 }
 
-pub enum TransactionType<'a> {
+pub enum TransactionType {
     InsertBond(NewBond, Vec<NewCorporateDebtRating>),
     InsertHolding(NewHolding),
-    UpdateHolding(&'a str, i64, i64),
+    UpdateHolding(String, i64, i64),
     InsertOrder(NewOrder),
     InsertOrganization(NewOrganization, Vec<NewAuthorization>),
     InsertParticipant(NewParticipant),
@@ -83,7 +83,7 @@ impl DataManager {
             }
             TransactionType::InsertHolding(holding) => self.insert_holding(&holding),
             TransactionType::UpdateHolding(address, current_block_num, max_block_num) => {
-                self.update_holding(address, current_block_num, max_block_num)
+                self.update_holding(&address, current_block_num, max_block_num)
             }
             TransactionType::InsertOrder(order) => self.insert_order(&order),
             TransactionType::InsertOrganization(org, authorizations) => {
