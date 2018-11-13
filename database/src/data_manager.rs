@@ -27,7 +27,8 @@ pub struct DataManager {
 }
 
 pub enum OperationType {
-    InsertParticipant(Vec<NewParticipant>),
+    InsertParticipants(Vec<NewParticipant>),
+    InsertOrganizations(Vec<(NewOrganization, Vec<NewAuthorization>)>),
 }
 
 impl DataManager {
@@ -67,8 +68,15 @@ impl DataManager {
 
     fn execute_transaction(&self, transaction: OperationType) -> Result<(), DatabaseError> {
         match transaction {
-            OperationType::InsertParticipant(participants) => {
+            OperationType::InsertParticipants(participants) => {
                 self.insert_participant(&participants)
+            }
+            OperationType::InsertOrganizations(organizations) => {
+                for (organization, authorizations) in organizations {
+                    self.insert_organization(&organization)?;
+                    self.insert_authorization(&authorizations)?;
+                }
+                Ok(())
             }
         }
     }
@@ -122,6 +130,71 @@ impl DataManager {
         diesel::update(modified_participant_query)
             .set(participants::end_block_num.eq(current_block_num))
             .execute(&*self.conn)?;
+        Ok(())
+    }
+
+    fn insert_authorization(
+        &self,
+        authorizations: &[NewAuthorization],
+    ) -> Result<(), DatabaseError> {
+        for authorization in authorizations {
+            self.update_authorization(
+                &authorization.organization_id,
+                &authorization.participant_public_key,
+                authorization.start_block_num,
+            )?;
+        }
+        diesel::insert_into(authorizations::table)
+            .values(authorizations)
+            .execute(&*self.conn)?;
+        Ok(())
+    }
+
+    fn update_authorization(
+        &self,
+        organization_id: &str,
+        participant_public_key: &str,
+        current_block_num: i64,
+    ) -> Result<(), DatabaseError> {
+        let auths_query = authorizations::table
+            .filter(authorizations::organization_id.eq(organization_id))
+            .filter(authorizations::participant_public_key.eq(participant_public_key))
+            .filter(authorizations::end_block_num.eq(MAX_BLOCK_NUM));
+
+        diesel::update(auths_query)
+            .set(authorizations::end_block_num.eq(current_block_num))
+            .execute(&*self.conn)?;
+        Ok(())
+    }
+
+    fn insert_organization(&self, organization: &NewOrganization) -> Result<(), DatabaseError> {
+        self.update_organization(
+            &organization.organization_id,
+            organization.start_block_num,
+            organization.end_block_num,
+        )?;
+
+        diesel::insert_into(organizations::table)
+            .values(organization)
+            .execute(&*self.conn)?;
+
+        Ok(())
+    }
+
+    fn update_organization(
+        &self,
+        organization_id: &str,
+        current_block_num: i64,
+        max_block_num: i64,
+    ) -> Result<(), DatabaseError> {
+        let modified_orgs_query = organizations::table
+                .filter(organizations::end_block_num.eq(max_block_num)) //max_block
+                .filter(organizations::organization_id.eq(organization_id)); //same company will update
+
+        diesel::update(modified_orgs_query)
+            .set(organizations::end_block_num.eq(current_block_num))
+            .execute(&*self.conn)?;
+
         Ok(())
     }
 
