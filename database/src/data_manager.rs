@@ -157,18 +157,19 @@ mod tests {
         DataManager::new(&dns).expect("Failed to initialize to DataManager")
     }
 
-    fn get_participant(
+    fn mock_insert_participant_operation(
         organization_id: &str,
         public_key: &str,
         start_block_num: i64,
-    ) -> NewParticipant {
-        NewParticipant {
+    ) -> OperationType {
+        let participant = NewParticipant {
             public_key: String::from(public_key),
             organization_id: String::from(organization_id),
             username: String::from("user1"),
             start_block_num: start_block_num,
             end_block_num: MAX_BLOCK_NUM,
-        }
+        };
+        OperationType::InsertParticipants(vec![participant])
     }
 
     fn get_block(block_num: i64, block_id: &str) -> Block {
@@ -181,8 +182,8 @@ mod tests {
     #[test]
     fn test_drop_fork() {
         run_test(|dbaddress| {
-            let participant1 = get_participant("T", "124324253", 3);
-            let participant2 = get_participant("T", "443241214", 10);
+            let participant_operation1 = mock_insert_participant_operation("T", "124324253", 3);
+            let participant_operation2 = mock_insert_participant_operation("T", "443241214", 10);
 
             let block1 = get_block(2, "block_test1");
             let block2 = get_block(10, "block_test2");
@@ -191,18 +192,11 @@ mod tests {
             let conn = &*manager.conn;
 
             manager
-                .insert_participant(&vec![participant1])
-                .expect("failed to add participant");
+                .execute_transactions_in_block(vec![participant_operation1], &block1)
+                .expect("Error executing transactions");
             manager
-                .insert_participant(&vec![participant2])
-                .expect("failed to add participant");
-
-            manager
-                .insert_block(&block1)
-                .expect("error inserting block");
-            manager
-                .insert_block(&block2)
-                .expect("error inserting block");
+                .execute_transactions_in_block(vec![participant_operation2], &block2)
+                .expect("Error executing transactions");
 
             let participants_list = participants::table
                 .load::<Participant>(conn)
@@ -216,7 +210,11 @@ mod tests {
             assert_eq!(2, participants_list.len());
             assert_eq!(2, block_list.len());
 
-            manager.drop_fork(9).expect("Error droping fork.");
+            let forked_block = get_block(10, "forked_block");
+
+            manager
+                .execute_transactions_in_block(vec![], &forked_block)
+                .expect("Error executing transactions");
 
             let participants_list = participants::table
                 .load::<Participant>(conn)
@@ -225,108 +223,10 @@ mod tests {
                 .load::<Block>(conn)
                 .expect("Error finding block");
 
-            //after droping fork
+            //after droping fork there should be only one participant
             assert_eq!(1, participants_list.len());
-            assert_eq!(1, block_list.len());
-        })
-    }
-
-    #[test]
-    fn test_insert_participant() {
-        run_test(|dbaddress| {
-            let participant = get_participant("T", "124324253", 3);
-
-            let manager = get_data_manager(dbaddress);
-            let conn = &*manager.conn;
-
-            manager
-                .insert_participant(&vec![participant.clone()])
-                .expect("failed to add participant");
-
-            let participants_list = participants::table
-                .load::<Participant>(conn)
-                .expect("Error finding participant");
-
-            assert_eq!(1, participants_list.len());
-            assert_eq!(
-                Some(participant.organization_id),
-                participants_list[0].organization_id
-            );
-            assert_eq!(&Some(participant.username), &participants_list[0].username);
-            assert_eq!(
-                Some(participant.start_block_num),
-                participants_list[0].start_block_num
-            );
-            assert_eq!(
-                Some(participant.end_block_num),
-                participants_list[0].end_block_num
-            );
-        })
-    }
-
-    #[test]
-    fn test_update_participant() {
-        run_test(|dbaddress| {
-            let participant = get_participant("T", "124324253", 3);
-
-            let manager = get_data_manager(dbaddress);
-            let conn = &*manager.conn;
-
-            manager
-                .insert_participant(&vec![participant.clone()])
-                .expect("failed to add participant");
-
-            let participants_list = participants::table
-                .load::<Participant>(conn)
-                .expect("Error finding participant");
-
-            assert_eq!(1, participants_list.len());
-            assert_eq!(
-                Some(participant.start_block_num),
-                participants_list[0].start_block_num
-            );
-            assert_eq!(
-                Some(participant.end_block_num),
-                participants_list[0].end_block_num
-            );
-
-            let new_block_num = 5;
-            let end_block_num = MAX_BLOCK_NUM;
-
-            manager
-                .update_participant(&participant.public_key, new_block_num, end_block_num)
-                .expect("failed to update participant");
-
-            let participants_list = participants::table
-                .load::<Participant>(conn)
-                .expect("Error finding participant");
-
-            assert_eq!(1, participants_list.len());
-            assert_eq!(
-                Some(participant.start_block_num),
-                participants_list[0].start_block_num
-            );
-            assert_eq!(Some(new_block_num), participants_list[0].end_block_num);
-        })
-    }
-
-    #[test]
-    fn test_insert_block() {
-        run_test(|dbaddress| {
-            let block = get_block(1236, "block_test");
-
-            let manager = get_data_manager(dbaddress);
-            let conn = &*manager.conn;
-
-            manager.insert_block(&block).expect("error inserting block");
-
-            let block_list = blocks::table
-                .load::<Block>(conn)
-                .expect("Error finding block");
-
-            assert_eq!(1, block_list.len());
-            assert_eq!(block.block_num, block_list[0].block_num);
-            assert_eq!(block.block_id, block_list[0].block_id);
+            //after droping fork there should be two blocks, not three
+            assert_eq!(2, block_list.len());
         })
     }
 
@@ -334,20 +234,17 @@ mod tests {
     #[test]
     fn test_duplicate_block() {
         run_test(|dbaddress| {
-            let participant = get_participant("T", "124324253", 1);
-
-            let participant2 = get_participant("T", "54543254352", 1);
+            let participant_operation1 = mock_insert_participant_operation("T", "124324253", 3);
+            let participant_operation2 = mock_insert_participant_operation("T", "443241214", 3);
 
             let block1 = get_block(1, "block_test1");
-
-            let t1 = OperationType::InsertParticipant(vec![participant]);
 
             let manager = get_data_manager(dbaddress);
             let conn = &*manager.conn;
 
             manager
-                .execute_transactions_in_block(vec![t1], &block1)
-                .expect("Error executing transaction.");
+                .execute_transactions_in_block(vec![participant_operation1], &block1)
+                .expect("Error executing transactions");
 
             let participants_list = participants::table
                 .load::<Participant>(conn)
@@ -355,10 +252,8 @@ mod tests {
 
             assert_eq!(1, participants_list.len());
 
-            let t2 = OperationType::InsertParticipant(vec![participant2]);
-
             manager
-                .execute_transactions_in_block(vec![t2], &block1)
+                .execute_transactions_in_block(vec![participant_operation2], &block1)
                 .expect("Error executing transaction.");
 
             let participants_list = participants::table
@@ -382,7 +277,7 @@ mod tests {
 
         conn.batch_execute(
             "DROP SCHEMA public CASCADE;
-                            CREATE SCHEMA public;",
+             CREATE SCHEMA public;",
         ).expect("Error cleaning database.");
         conn.batch_execute(include_str!("../tables/load_bond_db.sql"))
             .expect("Error loading database");
